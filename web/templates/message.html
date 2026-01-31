@@ -1,11 +1,13 @@
 <div class="message" id="message-{{ .ID }}">
     {{ if .Author }}
     <div class="avatar"
-            style="background-image: url('/media?url=https://cdn.discordapp.com/avatars/{{ .Author.ID }}/{{ .Author.Avatar }}.png');">
+            style="background-image: url('/media?url=https://cdn.discordapp.com/avatars/{{ .Author.ID }}/{{ .Author.Avatar }}.png'); cursor: pointer;"
+            hx-get="/guilds/{{ .GuildID }}/members/{{ .Author.ID }}/profile" hx-target="#profile-modal" hx-trigger="click">
     </div>
     <div class="message-content">
         <div class="message-header" style="display: flex; align-items: baseline;">
-            <span class="username" style="color: #fff; margin-right: 8px; font-weight: 500;">
+            <span class="username" style="{{ if .AuthorColor }}color: {{ .AuthorColor }};{{ else }}color: #fff;{{ end }} margin-right: 8px; font-weight: 500; cursor: pointer;"
+                hx-get="/guilds/{{ .GuildID }}/members/{{ .Author.ID }}/profile" hx-target="#profile-modal" hx-trigger="click">
                 {{ .Author.Username }}
             </span>
             <span class="timestamp" style="font-size: 0.75rem; color: #72767d;">
