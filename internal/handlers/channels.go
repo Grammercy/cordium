@@ -1,14 +1,17 @@
 package handlers
 
 import (
+	"bytes"
 	"discord-alt/internal/auth"
 	"discord-alt/internal/discord"
 	"discord-alt/internal/markdown"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/gorilla/mux"
@@ -20,10 +23,38 @@ func isImage(filename string) bool {
 	return ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".gif" || ext == ".webp"
 }
 
+func formatTime(t string) string {
+	// discordgo.Timestamp is essentially a string (time.Time wrapped) or just string in some versions.
+	// Actually it is usually `type Timestamp string`.
+	// But if undefined, maybe I should accept string?
+	// `t` comes from `.Timestamp` in template.
+	// `Message.Timestamp` is `time.Time` in some versions, `Timestamp` (string) in others.
+	// Let's inspect `discordgo` struct if I could, but I can't.
+	// Let's assume it is string-compatible or time.Time.
+	// If I take `interface{}`, I can check.
+	return parseTimestamp(t)
+}
+
+func parseTimestamp(v interface{}) string {
+	switch t := v.(type) {
+	case string:
+		ts, err := time.Parse(time.RFC3339, t)
+		if err != nil {
+			return t
+		}
+		return ts.Format("01/02/2006 3:04 PM")
+	case time.Time:
+		return t.Format("01/02/2006 3:04 PM")
+	default:
+		return fmt.Sprintf("%v", v)
+	}
+}
+
 var funcMap = template.FuncMap{
 	"isImage": isImage,
 	"printf":  fmt.Sprintf,
 	"render":  markdown.Render,
+	"time":    parseTimestamp,
 }
 
 func ChannelListHandler(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +138,13 @@ func ChannelListHandler(w http.ResponseWriter, r *http.Request) {
 		Channels:  channels,
 	}
 
-	tmpl.Execute(w, data)
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		log.Printf("Template execution error (channels): %v", err)
+		http.Error(w, "Template error", http.StatusInternalServerError)
+		return
+	}
+	w.Write(buf.Bytes())
 }
 
 func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
@@ -177,6 +214,12 @@ func ChatViewHandler(w http.ResponseWriter, r *http.Request) {
 		channelName = channel.Name
 	}
 
+	// Fetch members (limit 100)
+	var members []*discordgo.Member
+	if guildID != "@me" {
+		members, _ = dg.GuildMembers(guildID, "", 100)
+	}
+
 	// Process messages (Proxy URLs)
 	// We iterate to process content if needed, but simple proxying is handled in template by prefixing /media?url=
 	// However, for inline images in Markdown, we'd need a parser.
@@ -201,12 +244,20 @@ func ChatViewHandler(w http.ResponseWriter, r *http.Request) {
 		ChannelID   string
 		ChannelName string
 		Messages    []*discordgo.Message
+		Members     []*discordgo.Member
 	}{
 		GuildID:     guildID,
 		ChannelID:   channelID,
 		ChannelName: channelName,
 		Messages:    messages,
+		Members:     members,
 	}
 
-	tmpl.Execute(w, data)
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		log.Printf("Template execution error (chat): %v", err)
+		http.Error(w, "Template error", http.StatusInternalServerError)
+		return
+	}
+	w.Write(buf.Bytes())
 }

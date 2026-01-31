@@ -1,28 +1,38 @@
-<div class="chat-header">
-    # {{ .ChannelName }}
-</div>
+<div style="display: flex; flex: 1; height: 100%; overflow: hidden;">
+    <!-- Main Chat Area -->
+    <div class="chat-main" style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+        <div class="chat-header">
+            # {{ .ChannelName }}
+        </div>
 
-<div class="messages-wrapper" id="messages-list">
-    <!-- Messages are reversed in CSS (flex-direction: column-reverse), so we render them in order (oldest first) -->
-    <!-- But wait, if we fetch history, we get newest first usually? No, Discord API returns specific order. -->
-    <!-- Usually we want newest at the bottom. -->
-    <!-- If flex-direction is column-reverse, the first element in DOM is at the bottom. -->
-    <!-- So if we have [Msg1, Msg2, Msg3] (Msg3 is newest), we want Msg3 at bottom. -->
-    <!-- So Msg3 should be first in DOM? No, column-reverse puts last child at top. -->
-    <!-- Wait. column-reverse: "The main-start direction is from bottom to top." -->
-    <!-- So first child is at bottom. -->
-    <!-- So if I have [Msg1(Old), Msg2, Msg3(New)], and I want Msg3 at bottom, Msg3 should be the first child. -->
-    <!-- So I should iterate in Reverse Order (Newest -> Oldest). -->
+        <div class="messages-wrapper" id="messages-list">
+            {{ range .Messages }}
+                {{ template "message.html" . }}
+            {{ end }}
+        </div>
 
-    {{ range .Messages }}
-        {{ template "message.html" . }}
+        <div class="chat-input-area">
+            <form hx-post="/channels/{{ .GuildID }}/{{ .ChannelID }}/messages" hx-swap="none" hx-on:htmx:after-request="this.reset()">
+                <input type="text" name="content" class="chat-input" placeholder="Message #{{ .ChannelName }}" autocomplete="off">
+            </form>
+        </div>
+    </div>
+
+    <!-- Members Sidebar -->
+    {{ if .Members }}
+    <div class="members-sidebar" style="width: 240px; background: #2f3136; flex-shrink: 0; display: flex; flex-direction: column; padding: 16px; overflow-y: auto;">
+        <div style="font-weight: bold; color: #8e9297; font-size: 12px; margin-bottom: 8px; text-transform: uppercase;">Members — {{ len .Members }}</div>
+        {{ range .Members }}
+        <div class="member-item" style="display: flex; align-items: center; padding: 8px; border-radius: 4px; cursor: pointer; color: #8e9297; opacity: {{ if .User.Bot }}0.7{{ else }}1{{ end }};">
+            <div class="avatar" style="width: 32px; height: 32px; margin-right: 12px; background-image: url('/media?url=https://cdn.discordapp.com/avatars/{{ .User.ID }}/{{ .User.Avatar }}.png');"></div>
+            <div class="username" style="font-weight: bold; color: {{ if .User.Bot }}#7289da{{ else }}#b9bbbe{{ end }};">
+                {{ .User.Username }}
+                {{ if .User.Bot }}<span style="background: #5865F2; color: white; padding: 1px 4px; border-radius: 3px; font-size: 10px; margin-left: 4px;">BOT</span>{{ end }}
+            </div>
+        </div>
+        {{ end }}
+    </div>
     {{ end }}
-</div>
-
-<div class="chat-input-area">
-    <form hx-post="/channels/{{ .GuildID }}/{{ .ChannelID }}/messages" hx-swap="none" hx-on:htmx:after-request="this.reset()">
-        <input type="text" name="content" class="chat-input" placeholder="Message #{{ .ChannelName }}" autocomplete="off">
-    </form>
 </div>
 
 <!-- WebSocket Connection for this channel -->
