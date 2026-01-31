@@ -32,6 +32,9 @@ func (m *Manager) Connect(sessionID, token string) (*discordgo.Session, error) {
 		return nil, err
 	}
 
+	// Set Intents to receive all events (crucial for Message Content on newer bots)
+	dg.Identify.Intents = discordgo.IntentsAll
+
 	// We might need to set specific User-Agent or properties to avoid detection,
 	// but for now we stick to default.
 
