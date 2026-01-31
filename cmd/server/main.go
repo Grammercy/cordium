@@ -51,6 +51,7 @@ func main() {
 	api.HandleFunc("/channels/{guildID}", handlers.ChannelListHandler)
 	api.HandleFunc("/channels/{guildID}/{channelID}", handlers.ChatViewHandler)
 	api.HandleFunc("/channels/{guildID}/{channelID}/messages", handlers.SendMessageHandler).Methods("POST")
+	api.HandleFunc("/channels/{guildID}/{channelID}/messages/{messageID}", handlers.GetMessageHandler)
 
 	// Media Proxy (Protected? Maybe not strictly necessary to be authenticated to view proxied images, but better for security)
 	api.HandleFunc("/media", proxy.Handler)

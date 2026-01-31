@@ -147,6 +147,40 @@ func ChannelListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(buf.Bytes())
 }
 
+func GetMessageHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	channelID := vars["channelID"]
+	messageID := vars["messageID"]
+
+	session, ok := auth.GetSession(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	dg := discord.GlobalManager.GetSession(session.ID)
+
+	msg, err := dg.ChannelMessage(channelID, messageID)
+	if err != nil {
+		http.Error(w, "Failed to fetch message", http.StatusInternalServerError)
+		return
+	}
+
+	tmpl, err := template.New("message.html").Funcs(funcMap).ParseFiles(filepath.Join("web", "templates", "message.html"))
+	if err != nil {
+		log.Printf("Template parse error: %v", err)
+		http.Error(w, "Template error", http.StatusInternalServerError)
+		return
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, msg); err != nil {
+		log.Printf("Template execute error: %v", err)
+		http.Error(w, "Template error", http.StatusInternalServerError)
+		return
+	}
+	w.Write(buf.Bytes())
+}
+
 func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
 	// CSRF / Origin Check
 	origin := r.Header.Get("Origin")
