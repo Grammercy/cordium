@@ -14,12 +14,10 @@ func HandleMessageCreate(sessionID string, s *discordgo.Session, m *discordgo.Me
 	}
 
 	// Trigger "Pull" via HTMX
-	// We send a hidden element that, when loaded by HTMX, triggers a GET request to fetch the message HTML.
-	// The GET request will append the message to #messages-list.
-	// hx-trigger="load" makes it happen immediately upon insertion into DOM (ws-connect div).
-	// hx-on:htmx:after-request removes the trigger element itself.
-	html := fmt.Sprintf(`<div hx-get="/channels/%s/%s/messages/%s" hx-trigger="load" hx-target="#messages-list" hx-swap="afterbegin" hx-on:htmx:after-request="this.remove()"></div>`,
-		guildID, m.ChannelID, m.ID)
+	// We send a div that OOB swaps ITSELF into the messages list.
+	// Once there, it immediately triggers a GET request to replace itself with the real message.
+	html := fmt.Sprintf(`<div id="msg-placeholder-%s" hx-swap-oob="afterbegin:#messages-list" hx-get="/channels/%s/%s/messages/%s" hx-trigger="load" hx-target="this" hx-swap="outerHTML"></div>`,
+		m.ID, guildID, m.ChannelID, m.ID)
 
 	GlobalHub.BroadcastToUserChannel(sessionID, m.ChannelID, []byte(html))
 }
