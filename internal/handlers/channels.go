@@ -167,6 +167,8 @@ func ChatViewHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to fetch messages", http.StatusInternalServerError)
 		return
 	}
+	// Log message count for debugging
+	fmt.Printf("Fetched %d messages for channel %s\n", len(messages), channelID)
 
 	// Fetch channel info
 	channel, err := dg.Channel(channelID)
@@ -185,7 +187,10 @@ func ChatViewHandler(w http.ResponseWriter, r *http.Request) {
 	// for _, m := range messages {
 	// }
 
-	tmpl, err := template.New("chat.html").Funcs(funcMap).ParseFiles(filepath.Join("web", "templates", "chat.html"))
+	tmpl, err := template.New("chat.html").Funcs(funcMap).ParseFiles(
+		filepath.Join("web", "templates", "chat.html"),
+		filepath.Join("web", "templates", "message.html"),
+	)
 	if err != nil {
 		http.Error(w, "Template error: " + err.Error(), http.StatusInternalServerError)
 		return

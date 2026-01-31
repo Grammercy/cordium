@@ -1,4 +1,5 @@
 <div class="message" id="message-{{ .ID }}">
+    {{ if .Author }}
     <div class="avatar"
             style="background-image: url('/media?url=https://cdn.discordapp.com/avatars/{{ .Author.ID }}/{{ .Author.Avatar }}.png');">
     </div>
@@ -6,6 +7,11 @@
         <div class="username" style="color: {{ if .Author.Color }}{{ .Author.Color }}{{ else }}#fff{{ end }};">
             {{ .Author.Username }}
         </div>
+    {{ else }}
+    <div class="avatar" style="background-color: #7289da;"></div>
+    <div class="message-content">
+        <div class="username">System</div>
+    {{ end }}
         <div class="text">{{ .Content | render }}</div>
 
         {{ range .Attachments }}

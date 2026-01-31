@@ -71,7 +71,8 @@ func QRWSHandler(w http.ResponseWriter, r *http.Request) {
 	// 2. Connect to Discord Remote Auth
 	discordHeader := http.Header{}
 	discordHeader.Add("Origin", "https://discord.com")
-	dConn, _, err := websocket.DefaultDialer.Dial("wss://remote-auth-gateway.discord.gg/v1", discordHeader)
+	// Using v2 as v1 is deprecated
+	dConn, _, err := websocket.DefaultDialer.Dial("wss://remote-auth-gateway.discord.gg/v2", discordHeader)
 	if err != nil {
 		log.Println("Discord dial error:", err)
 		return
