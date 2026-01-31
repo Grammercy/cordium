@@ -57,6 +57,12 @@ var funcMap = template.FuncMap{
 	"time":    parseTimestamp,
 }
 
+type MessageWrapper struct {
+	*discordgo.Message
+	AuthorColor string
+	GuildID     string
+}
+
 func ChannelListHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	guildID := vars["guildID"]
@@ -250,19 +256,32 @@ func ChatViewHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Fetch members (limit 100)
 	var members []*discordgo.Member
+	var guild *discordgo.Guild
 	if guildID != "@me" {
 		members, _ = dg.GuildMembers(guildID, "", 100)
+		guild, _ = dg.Guild(guildID)
+		if guild == nil {
+			guild, _ = dg.State.Guild(guildID)
+		}
 	}
 
-	// Process messages (Proxy URLs)
-	// We iterate to process content if needed, but simple proxying is handled in template by prefixing /media?url=
-	// However, for inline images in Markdown, we'd need a parser.
-	// For MVP, we only proxy Attachments and Avatars which are explicit in the struct.
-	// Markdown links are tricky. We'll leave them as is for now, or use a basic regex replace.
-
-	// Pre-processing
-	// for _, m := range messages {
-	// }
+	// Wrap messages with Color
+	var wrappedMessages []MessageWrapper
+	for _, m := range messages {
+		color := ""
+		if guild != nil {
+			member := m.Member
+			if member == nil {
+				member, _ = dg.State.Member(guildID, m.Author.ID)
+			}
+			color = discord.GetMemberColor(guild, member)
+		}
+		wrappedMessages = append(wrappedMessages, MessageWrapper{
+			Message:     m,
+			AuthorColor: color,
+			GuildID:     guildID,
+		})
+	}
 
 	tmpl, err := template.New("chat.html").Funcs(funcMap).ParseFiles(
 		filepath.Join("web", "templates", "chat.html"),
@@ -277,13 +296,13 @@ func ChatViewHandler(w http.ResponseWriter, r *http.Request) {
 		GuildID     string
 		ChannelID   string
 		ChannelName string
-		Messages    []*discordgo.Message
+		Messages    []MessageWrapper
 		Members     []*discordgo.Member
 	}{
 		GuildID:     guildID,
 		ChannelID:   channelID,
 		ChannelName: channelName,
-		Messages:    messages,
+		Messages:    wrappedMessages,
 		Members:     members,
 	}
 

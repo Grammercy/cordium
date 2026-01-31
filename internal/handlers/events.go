@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"discord-alt/internal/discord"
 	"discord-alt/internal/markdown"
 	"fmt"
 	"html/template"
@@ -46,9 +47,22 @@ func HandleMessageCreate(sessionID string, s *discordgo.Session, m *discordgo.Me
 		return
 	}
 
+	// Calculate Color
+	var color string
+	if m.GuildID != "" {
+		guild, _ := s.State.Guild(m.GuildID)
+		color = discord.GetMemberColor(guild, m.Member)
+	}
+
+	wrappedMsg := MessageWrapper{
+		Message:     m.Message,
+		AuthorColor: color,
+		GuildID:     m.GuildID,
+	}
+
 	// Render Message
 	var buf bytes.Buffer
-	if err := msgTmpl.ExecuteTemplate(&buf, "message_oob.html", m); err != nil {
+	if err := msgTmpl.ExecuteTemplate(&buf, "message_oob.html", wrappedMsg); err != nil {
 		log.Printf("Error executing message template: %v", err)
 		return
 	}
