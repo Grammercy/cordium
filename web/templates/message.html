@@ -1,0 +1,48 @@
+<div class="message" id="message-{{ .ID }}">
+    <div class="avatar"
+            style="background-image: url('/media?url=https://cdn.discordapp.com/avatars/{{ .Author.ID }}/{{ .Author.Avatar }}.png');">
+    </div>
+    <div class="message-content">
+        <div class="username" style="color: {{ if .Author.Color }}{{ .Author.Color }}{{ else }}#fff{{ end }};">
+            {{ .Author.Username }}
+        </div>
+        <div class="text">{{ .Content | render }}</div>
+
+        {{ range .Attachments }}
+        <div class="attachment">
+            <a href="/media?url={{ .URL }}" target="_blank">
+                {{ if isImage .Filename }}
+                <img src="/media?url={{ .URL }}" style="max-width: 300px; max-height: 300px; border-radius: 4px; margin-top: 5px;">
+                {{ else }}
+                [File: {{ .Filename }}]
+                {{ end }}
+            </a>
+        </div>
+        {{ end }}
+
+        {{ range .Embeds }}
+        <div class="embed" style="border-left: 4px solid #{{ printf "%06x" .Color }}; background: #2f3136; padding: 8px; margin-top: 5px; border-radius: 4px;">
+            {{ if .Title }}<div style="font-weight: bold;">{{ .Title }}</div>{{ end }}
+            {{ if .Description }}<div>{{ .Description }}</div>{{ end }}
+            {{ if .Image }}
+            <img src="/media?url={{ .Image.URL }}" style="max-width: 300px; border-radius: 4px; margin-top: 5px;">
+            {{ end }}
+        </div>
+        {{ end }}
+
+        {{ if .Reactions }}
+        <div class="reactions" style="margin-top: 5px; display: flex; flex-wrap: wrap; gap: 4px;">
+            {{ range .Reactions }}
+            <div class="reaction" style="background: #2f3136; padding: 2px 6px; border-radius: 4px; font-size: 12px; cursor: pointer; border: 1px solid {{ if .Me }}#5865F2{{ else }}transparent{{ end }};">
+                {{ if .Emoji.ID }}
+                <img src="/media?url=https://cdn.discordapp.com/emojis/{{ .Emoji.ID }}.png" style="width: 16px; height: 16px; vertical-align: middle;">
+                {{ else }}
+                {{ .Emoji.Name }}
+                {{ end }}
+                <span style="margin-left: 4px; color: #b9bbbe;">{{ .Count }}</span>
+            </div>
+            {{ end }}
+        </div>
+        {{ end }}
+    </div>
+</div>

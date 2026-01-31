@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Alt Login</title>
+    <style>
+        body { font-family: sans-serif; background: #2f3136; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login-box { background: #36393f; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); width: 400px; }
+        input { width: 100%; padding: 10px; margin-top: 10px; background: #202225; border: 1px solid #202225; color: white; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; margin-top: 20px; background: #5865F2; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #4752c4; }
+        .qr-section { margin-top: 20px; text-align: center; border-top: 1px solid #4f545c; padding-top: 20px; }
+        #qr-image { background: white; padding: 10px; display: inline-block; border-radius: 4px; display: none; }
+        #qr-status { margin-top: 10px; color: #b9bbbe; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>Login</h2>
+        <form action="/login" method="POST">
+            <label>Token Login</label>
+            <input type="password" name="token" placeholder="Paste user token here..." required>
+            <button type="submit">Login</button>
+        </form>
+
+        <div class="qr-section">
+            <h3>Or Scan QR Code</h3>
+            <img id="qr-image" src="" alt="Scan QR Code" />
+            <div id="qr-status">Connecting to Remote Auth...</div>
+        </div>
+    </div>
+
+    <script>
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(wsProtocol + '//' + window.location.host + '/auth/qr-ws');
+        const qrImage = document.getElementById('qr-image');
+        const qrStatus = document.getElementById('qr-status');
+
+        ws.onmessage = function(event) {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'qr') {
+                qrImage.src = 'data:image/png;base64,' + msg.data;
+                qrImage.style.display = 'inline-block';
+                qrStatus.innerText = 'Scan with your Discord mobile app';
+            } else if (msg.type === 'status') {
+                qrStatus.innerText = msg.msg;
+            } else if (msg.type === 'login') {
+                qrStatus.innerText = 'Login successful! Redirecting...';
+                window.location.href = msg.url;
+            } else if (msg.type === 'error') {
+                qrStatus.innerText = 'Error: ' + msg.msg;
+            }
+        };
+
+        ws.onclose = function() {
+            qrStatus.innerText = 'Connection lost. Refresh to try again.';
+        };
+    </script>
+</body>
+</html>

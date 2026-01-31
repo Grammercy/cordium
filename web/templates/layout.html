@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Alt</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/ws.js"></script>
+    <style>
+        body { margin: 0; padding: 0; display: flex; height: 100vh; background: #36393f; color: #dcddde; font-family: sans-serif; overflow: hidden; }
+
+        /* Guild Sidebar */
+        .guilds-nav { width: 72px; background: #202225; display: flex; flex-direction: column; align-items: center; padding-top: 12px; overflow-y: auto; flex-shrink: 0; }
+        .guild-icon { width: 48px; height: 48px; border-radius: 50%; background-color: #36393f; margin-bottom: 8px; cursor: pointer; transition: border-radius 0.2s; position: relative; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-decoration: none; }
+        .guild-icon:hover { border-radius: 16px; background-color: #5865F2; }
+        .guild-icon.active { border-radius: 16px; background-color: #5865F2; }
+        .separator { width: 32px; height: 2px; background: #36393f; margin: 8px 0; }
+
+        /* Sidebar (Channels) */
+        .sidebar { width: 240px; background: #2f3136; display: flex; flex-direction: column; border-top-left-radius: 8px; }
+        .sidebar-header { height: 48px; box-shadow: 0 1px 0 rgba(4,4,5,0.2); padding: 0 16px; display: flex; align-items: center; font-weight: bold; }
+        .channel-list { flex: 1; overflow-y: auto; padding: 8px; }
+        .channel-item { padding: 8px; border-radius: 4px; cursor: pointer; color: #8e9297; margin-bottom: 2px; display: block; text-decoration: none; }
+        .channel-item:hover { background: #34373c; color: #dcddde; }
+        .channel-item.active { background: #393c43; color: #fff; }
+
+        /* Main Chat */
+        .chat-area { flex: 1; background: #36393f; display: flex; flex-direction: column; position: relative; }
+        .chat-header { height: 48px; box-shadow: 0 1px 0 rgba(4,4,5,0.2); padding: 0 16px; display: flex; align-items: center; font-weight: bold; background: #36393f; z-index: 10; }
+        .messages-wrapper { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column-reverse; /* Bottom up */ }
+        .message { margin-bottom: 16px; display: flex; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 16px; background: #36393f; background-size: cover; flex-shrink: 0; }
+        .message-content { flex: 1; }
+        .username { font-weight: bold; margin-bottom: 4px; }
+        .text { white-space: pre-wrap; word-break: break-word; }
+
+        .chat-input-area { padding: 0 16px 24px 16px; background: #36393f; flex-shrink: 0; }
+        .chat-input { background: #40444b; border-radius: 8px; padding: 12px; color: #dcddde; width: 100%; border: none; outline: none; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <nav class="guilds-nav">
+        <!-- Home / DMs -->
+        <a href="/channels/@me" class="guild-icon" title="Direct Messages"
+           style="background-image: url('/media?url=https://cdn.discordapp.com/embed/avatars/0.png');"
+           hx-get="/channels/@me" hx-target="#sidebar-container" hx-push-url="true"></a>
+        <div class="separator"></div>
+
+        {{ range .Guilds }}
+        <a href="/channels/{{ .ID }}" class="guild-icon" title="{{ .Name }}"
+           {{ if .Icon }}
+           style="background-image: url('/media?url=https://cdn.discordapp.com/icons/{{ .ID }}/{{ .Icon }}.png');"
+           {{ else }}
+           style="background-color: #36393f; font-size: 10px; text-align: center;"
+           {{ end }}
+           hx-get="/channels/{{ .ID }}" hx-target="#sidebar-container" hx-push-url="true">
+           {{ if not .Icon }}{{ .Name }}{{ end }}
+        </a>
+        {{ end }}
+    </nav>
+
+    <div id="sidebar-container" class="sidebar" hx-get="/channels/@me" hx-trigger="load">
+        <!-- Channel list loads here -->
+        <div class="sidebar-header">Select a Server</div>
+    </div>
+
+    <div id="chat-container" class="chat-area">
+        <!-- Chat loads here -->
+    </div>
+</body>
+</html>

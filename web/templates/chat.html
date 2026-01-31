@@ -1,0 +1,61 @@
+<div class="chat-header">
+    # {{ .ChannelName }}
+</div>
+
+<div class="messages-wrapper" id="messages-list">
+    <!-- Messages are reversed in CSS (flex-direction: column-reverse), so we render them in order (oldest first) -->
+    <!-- But wait, if we fetch history, we get newest first usually? No, Discord API returns specific order. -->
+    <!-- Usually we want newest at the bottom. -->
+    <!-- If flex-direction is column-reverse, the first element in DOM is at the bottom. -->
+    <!-- So if we have [Msg1, Msg2, Msg3] (Msg3 is newest), we want Msg3 at bottom. -->
+    <!-- So Msg3 should be first in DOM? No, column-reverse puts last child at top. -->
+    <!-- Wait. column-reverse: "The main-start direction is from bottom to top." -->
+    <!-- So first child is at bottom. -->
+    <!-- So if I have [Msg1(Old), Msg2, Msg3(New)], and I want Msg3 at bottom, Msg3 should be the first child. -->
+    <!-- So I should iterate in Reverse Order (Newest -> Oldest). -->
+
+    {{ range .Messages }}
+    <div class="message" id="message-{{ .ID }}">
+        <div class="avatar"
+             style="background-image: url('/media?url=https://cdn.discordapp.com/avatars/{{ .Author.ID }}/{{ .Author.Avatar }}.png');">
+        </div>
+        <div class="message-content">
+            <div class="username" style="color: {{ if .Author.Color }}{{ .Author.Color }}{{ else }}#fff{{ end }};">
+                {{ .Author.Username }}
+            </div>
+            <div class="text">{{ .Content | render }}</div> <!-- Content is already HTML-safe and proxied from Go -->
+
+            {{ range .Attachments }}
+            <div class="attachment">
+                <a href="/media?url={{ .URL }}" target="_blank">
+                    {{ if isImage .Filename }}
+                    <img src="/media?url={{ .URL }}" style="max-width: 300px; max-height: 300px; border-radius: 4px; margin-top: 5px;">
+                    {{ else }}
+                    [File: {{ .Filename }}]
+                    {{ end }}
+                </a>
+            </div>
+            {{ end }}
+
+            {{ range .Embeds }}
+            <div class="embed" style="border-left: 4px solid #{{ printf "%06x" .Color }}; background: #2f3136; padding: 8px; margin-top: 5px; border-radius: 4px;">
+                {{ if .Title }}<div style="font-weight: bold;">{{ .Title }}</div>{{ end }}
+                {{ if .Description }}<div>{{ .Description }}</div>{{ end }}
+                {{ if .Image }}
+                <img src="/media?url={{ .Image.URL }}" style="max-width: 300px; border-radius: 4px; margin-top: 5px;">
+                {{ end }}
+            </div>
+            {{ end }}
+        </div>
+    </div>
+    {{ end }}
+</div>
+
+<div class="chat-input-area">
+    <form hx-post="/channels/{{ .GuildID }}/{{ .ChannelID }}/messages" hx-swap="none" hx-on:htmx:after-request="this.reset()">
+        <input type="text" name="content" class="chat-input" placeholder="Message #{{ .ChannelName }}" autocomplete="off">
+    </form>
+</div>
+
+<!-- WebSocket Connection for this channel -->
+<div hx-ext="ws" ws-connect="/ws?channel={{ .ChannelID }}"></div>

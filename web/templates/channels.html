@@ -1,0 +1,16 @@
+<div class="sidebar-header">
+    {{ .GuildName }}
+</div>
+<div class="channel-list">
+    {{ range .Channels }}
+    {{ if or (eq .Type 0) (eq .Type 1) (eq .Type 3) }}
+    <a href="/channels/{{ $.GuildID }}/{{ .ID }}"
+       class="channel-item"
+       hx-get="/channels/{{ $.GuildID }}/{{ .ID }}"
+       hx-target="#chat-container"
+       hx-push-url="true">
+       # {{ .Name }}
+    </a>
+    {{ end }}
+    {{ end }}
+</div>
