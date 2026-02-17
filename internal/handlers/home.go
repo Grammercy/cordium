@@ -6,6 +6,13 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"sync"
+)
+
+var (
+	homeTmpl *template.Template
+	homeOnce sync.Once
+	homeErr  error
 )
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -28,9 +35,12 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl, err := template.ParseFiles(filepath.Join("web", "templates", "layout.html"))
-	if err != nil {
-		http.Error(w, "Template error: " + err.Error(), http.StatusInternalServerError)
+	homeOnce.Do(func() {
+		homeTmpl, homeErr = template.ParseFiles(filepath.Join("web", "templates", "layout.html"))
+	})
+
+	if homeErr != nil {
+		http.Error(w, "Template error: "+homeErr.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -40,5 +50,5 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		Guilds: guilds,
 	}
 
-	tmpl.Execute(w, data)
+	homeTmpl.Execute(w, data)
 }

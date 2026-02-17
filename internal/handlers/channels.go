@@ -83,7 +83,7 @@ func ChannelListHandler(w http.ResponseWriter, r *http.Request) {
 
 		body, err := dg.RequestWithBucketID("GET", discordgo.EndpointUserChannels("@me"), nil, discordgo.EndpointUserChannels(""))
 		if err != nil {
-			http.Error(w, "Failed to fetch DMs: " + err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to fetch DMs: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -269,7 +269,7 @@ func ChatViewHandler(w http.ResponseWriter, r *http.Request) {
 		filepath.Join("web", "templates", "message.html"),
 	)
 	if err != nil {
-		http.Error(w, "Template error: " + err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Template error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

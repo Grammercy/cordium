@@ -7,8 +7,8 @@ import (
 )
 
 type Manager struct {
-	sessions map[string]*discordgo.Session
-	mu       sync.RWMutex
+	sessions        map[string]*discordgo.Session
+	mu              sync.RWMutex
 	OnMessageCreate func(string, *discordgo.Session, *discordgo.MessageCreate)
 }
 
