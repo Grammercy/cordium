@@ -14,6 +14,11 @@ import (
 )
 
 func main() {
+	// Initialize Templates
+	if err := handlers.InitTemplates(); err != nil {
+		log.Fatalf("Failed to initialize templates: %v", err)
+	}
+
 	// Setup Discord Event Handler
 	discord.GlobalManager.OnMessageCreate = handlers.HandleMessageCreate
 
