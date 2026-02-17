@@ -3,9 +3,7 @@ package handlers
 import (
 	"discord-alt/internal/auth"
 	"discord-alt/internal/discord"
-	"html/template"
 	"net/http"
-	"path/filepath"
 )
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -28,9 +26,8 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl, err := template.ParseFiles(filepath.Join("web", "templates", "layout.html"))
-	if err != nil {
-		http.Error(w, "Template error: " + err.Error(), http.StatusInternalServerError)
+	if LayoutTmpl == nil {
+		http.Error(w, "Templates not initialized", http.StatusInternalServerError)
 		return
 	}
 
@@ -40,5 +37,8 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		Guilds: guilds,
 	}
 
-	tmpl.Execute(w, data)
+	if err := LayoutTmpl.Execute(w, data); err != nil {
+		http.Error(w, "Template execution error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
