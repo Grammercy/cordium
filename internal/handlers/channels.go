@@ -238,8 +238,6 @@ func ChatViewHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to fetch messages", http.StatusInternalServerError)
 		return
 	}
-	// Log message count for debugging
-	fmt.Printf("Fetched %d messages for channel %s\n", len(messages), channelID)
 
 	// Fetch channel info
 	channel, err := dg.Channel(channelID)
